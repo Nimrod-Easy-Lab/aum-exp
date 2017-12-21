@@ -15,10 +15,14 @@ mvn deploy:deploy-file -Dfile=lib/nimrod.jar -DgroupId=nimrod -DartifactId=nimro
 
 mvn deploy:deploy-file -Dfile=lib/jdollyIf.jar -DgroupId=jdolly -DartifactId=jdolly -Dversion=1.0 -Dpackaging=jar -Durl=file:./maven-repository/ -DrepositoryId=maven-repository -DupdateReleaseInfo=true
 
+echo "Downloading Nimrod..."
+wget -P lib/ "https://onedrive.live.com/download?cid=3E9EEBEE0AA4D1F5&resid=3E9EEBEE0AA4D1F5%2149435&authkey=APD2AuoVOL0IUw8" -q --show-progress
+
 mvn clean
 
 mvn package
 
 echo "JAR file successfully generated."
 echo "Execute the following command: java -jar target/aum-exp-1.0-SNAPSHOT-shaded.jar <local-dir>"
+
 

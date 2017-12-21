@@ -11,12 +11,13 @@ mvn deploy:deploy-file -Dfile=lib/openjava.jar -DgroupId=openjava -DartifactId=o
 
 mvn deploy:deploy-file -Dfile=lib/tools.jar -DgroupId=com.sun -DartifactId=tools -Dversion=1.0 -Dpackaging=jar -Durl=file:./maven-repository/ -DrepositoryId=maven-repository -DupdateReleaseInfo=true
 
-mvn deploy:deploy-file -Dfile=lib/nimrod.jar -DgroupId=nimrod -DartifactId=nimrod -Dversion=1.0 -Dpackaging=jar -Durl=file:./maven-repository/ -DrepositoryId=maven-repository -DupdateReleaseInfo=true
+#mvn deploy:deploy-file -Dfile=lib/nimrod.jar -DgroupId=nimrod -DartifactId=nimrod -Dversion=1.0 -Dpackaging=jar -Durl=file:./maven-repository/ -DrepositoryId=maven-repository -DupdateReleaseInfo=true
 
 mvn deploy:deploy-file -Dfile=lib/jdollyIf.jar -DgroupId=jdolly -DartifactId=jdolly -Dversion=1.0 -Dpackaging=jar -Durl=file:./maven-repository/ -DrepositoryId=maven-repository -DupdateReleaseInfo=true
 
 echo "Downloading Nimrod..."
 wget -P lib/ "https://onedrive.live.com/download?cid=3E9EEBEE0AA4D1F5&resid=3E9EEBEE0AA4D1F5%2149435&authkey=APD2AuoVOL0IUw8" -q --show-progress
+mv "lib/download?cid=3E9EEBEE0AA4D1F5&resid=3E9EEBEE0AA4D1F5%2149435&authkey=APD2AuoVOL0IUw8" "lib/nimrod.jar"
 
 mvn clean
 

@@ -17,7 +17,7 @@ import emp_experiment.utils.Utils;
  * @author leofernandesmo
  *
  */
-public class JDollyOutStrategy {
+public class AUMStrategy {
 
 	private static Controller controller;
 

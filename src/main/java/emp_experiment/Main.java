@@ -26,7 +26,7 @@ public class Main {
 	
 	
 	private static Session session;
-	private static Dolly dolly;
+//	private static Dolly dolly;
 	private static MutationSystem mujava;
 	private static MutationSystem pitest;
 	private static MutationSystem major;
@@ -35,7 +35,7 @@ public class Main {
 	public static void main(String[] args) {
 
 		if (args.length > 0) {
-			Main m = new Main();
+//			Main m = new Main();
 
 			try {
 //				Properties prop = loadProperties(args, m);
@@ -52,7 +52,8 @@ public class Main {
 
 				
 				session = Session.setup(args[0]);
-				dolly = new Dolly(session);
+//				dolly = new Dolly(session); //Nao estamos mais usando Jdolly integrado. 
+				//Os programas precisam ter sidos gerados anteriormente 
 				mujava = new MuJava(session);
 				pitest = new Pitest(session);
 				major = new Major(session);
@@ -60,14 +61,14 @@ public class Main {
 				
 				Controller controller = Controller.getInstance();
 				controller.setSession(session);
-				controller.setDolly(dolly);
+//				controller.setDolly(dolly);
 				controller.addMutationSystem(mujava);
 				controller.addMutationSystem(pitest);
 				controller.addMutationSystem(major);
 				controller.setEquivalentDetection(safe);
 				
 //				JDollyStrategy.start(controller);
-				JDollyOutStrategy.start(controller);
+				AUMStrategy.start(controller);
 			
 				logger.info("Finished in " + session.elapsedTime() + " seconds ");
 				logger.info("Resulted in: " + session.getPath() + " ");

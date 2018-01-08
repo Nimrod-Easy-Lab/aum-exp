@@ -2,6 +2,7 @@ package emp_experiment.model;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -241,8 +242,18 @@ public class Session {
 
 		String javacCmd = "javac " + filesToCompile + " -d " + this.classesDir.getAbsolutePath();
 		Process pro = Runtime.getRuntime().exec(javacCmd);
-		pro.getErrorStream(); // Logar os erros
-		pro.getInputStream();
+//		pro.getErrorStream(); // Logar os erros
+		
+		InputStream error = pro.getErrorStream();
+		String err = "";
+		for (int i = 0; i < error.available(); i++) {
+        	err += (char) error.read();
+        }
+        System.out.println(err);
+        error = pro.getInputStream();
+		for (int i = 0; i < error.available(); i++) {
+        	err += (char) error.read();
+        }
 		pro.waitFor();
 		if(pro.exitValue() != 0){
 			return false;

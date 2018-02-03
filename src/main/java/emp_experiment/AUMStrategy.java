@@ -24,27 +24,24 @@ public class AUMStrategy {
 	public static void start(Controller c) throws Exception {
 
 		controller = c;
-		getAlreadyGeneratedPrograms();
+		startAnalysis();
 
 	}
 
-	private static void getAlreadyGeneratedPrograms() throws Exception {
+	private static void startAnalysis() throws Exception {
 		List<Mutant> allMutants = new ArrayList<Mutant>();
-		List<File> dirList = Utils.listDirectories(controller.getSession().getSourcesDir());
-		for (File dir : dirList) {
-			List<File> programs = Utils.listDirectories(dir.getAbsolutePath());
+			List<File> programs = Utils.listDirectories(controller.getSession().getSourcesDir());
 			sortByTestNumber(programs);
 			for (File testDir : programs) {
 				//Check if the program was analyzed before
 				List<File> tag = Utils.listFilesAndFilesSubDirectories(testDir.getAbsolutePath(), "alredy_analyzed.log");
 				if(!tag.isEmpty()){
-					System.out.println("Test: " + testDir.getName() + " was analyzed before.");
+					System.out.println("Program: " + testDir.getName() + " was analyzed before.");
 				} else {
 					controller.startAnalysis(testDir, allMutants);
 				}
 			}
-
-		}
+//		}
 
 	}
 

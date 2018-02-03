@@ -15,7 +15,6 @@ import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
 
 import emp_experiment.model.Mutant;
-import emp_experiment.model.Session;
 import emp_experiment.utils.Utils;
 import saferefactor.core.NimrodImpl;
 import saferefactor.core.Parameters;
@@ -32,7 +31,7 @@ public class SafeRefactorDriver {
 	private static String source = "";
 	// private static String target = "";
 	private static List<String> targets;
-	private static String timeout = "3";
+//	private static String timeout = "3";
 	private static boolean quiet = false;
 
 	private static final String SAFEREFACTOR_MAIN = " saferefactor.ui.Main";
@@ -45,7 +44,7 @@ public class SafeRefactorDriver {
 
 	private Map<String, List<String>> mutants = new HashMap<String, List<String>>();
 
-	public void execute(String[] args, String testName, List<Mutant> mutants,
+	public void execute(String[] args, File classesDir, List<Mutant> mutants,
 			emp_experiment.model.SafeRefactor safeRefactor) {
 
 		safeRefactorModel = safeRefactor;
@@ -90,7 +89,7 @@ public class SafeRefactorDriver {
 			Parameters parameters = new Parameters();
 			// parameters.setKind_of_analysis(Parameters.SAFIRA_ANALYSIS);
 			// //Ativando a análise de impacto Leo adicionou esta linha
-			parameters.setTimeLimit(Integer.parseInt(timeout));
+			parameters.setTimeLimit(Integer.parseInt(safeRefactorModel.getSession().getTimeoutTestGeneration()));
 			// Verifica se precisa compilar o projeto
 			if (!mutants.get(0).isNeedCompile()) {
 				// Caso eu queira executar apenas com .class
@@ -105,15 +104,14 @@ public class SafeRefactorDriver {
 				sr.compileTargets();
 			}
 			sr.checkTransformations(targetProjects);
-
-			// sr.printMutantsListInfo();
+			sr.printMutantsListInfo();
 
 			Report report = sr.getReport();
 
 			List<String> equivalents = sr.getEquivalents();
 			List<String> duplicateds = sr.getDuplicateds();
 
-			System.out.println("Finished analysis of " + testName);
+			System.out.println("Finished analysis of " + classesDir.getParent());
 			System.out.println("Tool: " + mutants.get(0).getMutationTestingTool());
 			System.out.println("Equivalents: " + equivalents.size());
 			System.out.println("Duplicateds: " + duplicateds.size());
@@ -230,7 +228,7 @@ public class SafeRefactorDriver {
 
 				Parameters parametersDup = new Parameters();
 				// parameters.setKind_of_analysis(Parameters.SAFIRA_ANALYSIS);
-				parametersDup.setTimeLimit(Integer.parseInt(timeout));
+				parametersDup.setTimeLimit(Integer.parseInt(safeRefactorModel.getSession().getTimeoutTestGeneration()));
 				parametersDup.setCompileProjects(false);
 
 				SafeRefactor srDuplicateds = new SafeRefactorImp(sourceProjectDup, targetProjectDup, parametersDup);
@@ -254,7 +252,7 @@ public class SafeRefactorDriver {
 			safeRefactorModel.addOneToTotalFailedAnalysis();
 			List<String> line = new ArrayList<String>();
 			String textToLog = "";
-			textToLog = "Test " + testName + " failed analysis.";
+			textToLog = "Test " + classesDir.getParent() + " failed analysis.";
 			textToLog += "Result: EXCEPTION";
 			textToLog += "Reason: " + e.getMessage();
 			line.add(textToLog);
@@ -298,13 +296,13 @@ public class SafeRefactorDriver {
 					System.err.println("-lib requires a path");
 				if (vflag)
 					System.out.println("lib path= " + libPath);
-			} else if (arg.equals("-timeout")) {
-				if (i < args.length)
-					timeout = args[i++];
-				else
-					System.err.println("-timeout requires a time");
-				if (vflag)
-					System.out.println("timeout= " + libPath);
+//			} else if (arg.equals("-timeout")) {
+//				if (i < args.length)
+//					timeout = args[i++];
+//				else
+//					System.err.println("-timeout requires a time");
+//				if (vflag)
+//					System.out.println("timeout= " + libPath);
 			}
 		}
 
@@ -316,7 +314,6 @@ public class SafeRefactorDriver {
 		targets = new ArrayList<String>();
 		for (int j = ++i; j < args.length; j++) {
 			targets.add(args[j]);
-
 		}
 		// target = args[i + 1];
 	}

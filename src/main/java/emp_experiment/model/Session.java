@@ -11,7 +11,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.FileUtils;
+
 import emp_experiment.driver.SafeRefactorDriver;
+import emp_experiment.utils.CompilerException;
 import emp_experiment.utils.Utils;
 
 public class Session {
@@ -20,27 +23,20 @@ public class Session {
 	private String path;
 	private int totalProgramsGenerated;
 	private int totalProgramsCompiled;
-	
-	
+	private String timeoutTestGeneration = "3";
 	private File sourcesDir;
 	private File classesDir;
 	
 	private static Logger logger = Logger.getLogger(Utils.LOGGER_NAME);
-//	private static String newline = System.getProperty("line.separator");
-//	private static final String LOGGER_NAME = "emp_experiment";
 
-	
 	private Session(String path) {
 		super();
 		this.path = path;
 		this.setupDirectories(getPath());
 	}
 
-
-
 	public static Session setup(String output){
 		long currentTime = System.currentTimeMillis();
-//		Utils.logSetup(sessionPath); //setup Logger
 		Session s = new Session(output);
 		s.setStartTime(currentTime);
 		return s;
@@ -189,15 +185,7 @@ public class Session {
 		return mutantOperators;
 	}
 	
-	
-	public void replacePackageName(File javaFile) throws IOException{
-		Utils.replacePackageName(javaFile);
-	}
-	
-	public String getPackageFromJavaSource(File javaFile)throws IOException {
-		return Utils.getPackageName(javaFile);
-	}
-	
+
 	public String getClassesDir(){
 		return classesDir.getAbsolutePath();
 	}
@@ -206,41 +194,48 @@ public class Session {
 		return sourcesDir.getAbsolutePath();
 	}
 	
-	
-	public boolean compileProgram(File testFolder) {
+	public boolean compileProgram(File testFolder) throws CompilerException{
 		totalProgramsGenerated++;
 		boolean result = false;
-		List<File> javaFiles = Utils.listFilesAndFilesSubDirectories(testFolder.getAbsolutePath(), ".java");
-		
+		List<File> javaFiles = Utils.listFilesAndFilesSubDirectories(testFolder.getAbsolutePath(), ".java");		
 		if (javaFiles != null && javaFiles.size() > 0) {
 			try {
-				for (File file : javaFiles) {
-					// Muda o package para comecar no nome do test.
-					replacePackageName(file);
-				}
-
-				result = compileFiles(javaFiles);
+				replacePackageNameOfProblematicPrograms(javaFiles);
+				result = compileFiles(javaFiles, testFolder.getName());
 				if(result){
-					totalProgramsCompiled++;
-				}
+					totalProgramsCompiled++;					
+				}				
 			} catch (IOException e) {
-				e.printStackTrace();
+				throw new CompilerException("    " + testFolder.getName() + 
+						" didn't compile.");
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				throw new CompilerException("    " + testFolder.getName() + 
+						" didn't compile."); 
 			}
 		}
 		return result;
 	}
+
+	private void replacePackageNameOfProblematicPrograms(List<File> javaFiles) throws IOException {
+		for (File file : javaFiles) {
+			Utils.replacePackageName(file);
+		}
+	}
 	
 	
-	private boolean compileFiles(List<File> javaFiles) throws IOException, InterruptedException {
+	private boolean compileFiles(List<File> javaFiles, String testName) throws IOException, InterruptedException {
 		// Change class name and file name to avoid compiler confusion
 		String filesToCompile = " ";
 		for (File javaFile : javaFiles) {
 			filesToCompile += javaFile.getAbsolutePath() + " ";
 		}
+		
+		File dest = new File(this.classesDir.getAbsolutePath());
+		if(!dest.exists()) {
+			dest.mkdirs();
+		}
 
-		String javacCmd = "javac " + filesToCompile + " -d " + this.classesDir.getAbsolutePath();
+		String javacCmd = "javac " + filesToCompile + " -d " + dest.getAbsolutePath();
 		Process pro = Runtime.getRuntime().exec(javacCmd);
 //		pro.getErrorStream(); // Logar os erros
 		
@@ -263,85 +258,21 @@ public class Session {
 
 	}
 	
-	
-	
 	public void createDirectory(File testFolder) {
 		File file = new File(getPath() + "/" + testFolder.getName());
 		if (!file.exists()) {
 			file.mkdirs();
 		}
-		// System.out.println(testFolder.getName());
-		// Files.copy(testFolder.toPath(), target, options)
 	}
-
-
 
 	public int getTotalProgramsGenerated() {
 		return totalProgramsGenerated;
 	}
 
-
-
 	public int getTotalProgramsCompiled() {
 		return totalProgramsCompiled;
 	}
 	
-	
-	
-//	
-//	private void removeLineFromFile(String file, String lineToRemove) {
-//
-//		try {
-//			File inFile = new File(file);
-//			if (!inFile.isFile()) {
-//				System.out.println("Parameter is not an existing file");
-//				return;
-//			}
-//			// Construct the new file that will later be renamed to the original
-//			// filename.
-//			File tempFile = new File(inFile.getAbsolutePath() + ".tmp");
-//			BufferedReader br = new BufferedReader(new FileReader(file));
-//			PrintWriter pw = new PrintWriter(new FileWriter(tempFile));
-//			String line;
-//			// Read from the original file and write to the new
-//			// unless content matches data to be removed.
-//			while ((line = br.readLine()) != null) {
-//				if (!line.trim().contains(lineToRemove)) {
-//					pw.println(line);
-//					pw.flush();
-//				}
-//			}
-//			pw.close();
-//			br.close();
-//
-//			// Delete the original file
-//			if (!inFile.delete()) {
-//				System.out.println("Could not delete file");
-//				return;
-//			}
-//			// Rename the new file to the filename the original file had.
-//			if (!tempFile.renameTo(inFile))
-//				System.out.println("Could not rename file");
-//
-//		} catch (FileNotFoundException ex) {
-//			ex.printStackTrace();
-//		} catch (IOException ex) {
-//			ex.printStackTrace();
-//		}
-//	}
-//
-//	private String getTestname(String absolutePath) {
-//		String[] folders = absolutePath.split("/");
-//		String packageName = folders[folders.length - 4] + "." + folders[folders.length - 3] + "."
-//				+ folders[folders.length - 2];
-//		return packageName; // Position that has test name
-//	}
-	
-	
-
-	
-
-
 	public List<String> getLogInfo(){
 		List<String> lines = new ArrayList<String>();
 		lines.add("Time: " + elapsedTime() + " seconds");
@@ -350,5 +281,18 @@ public class Session {
 		
 		return lines;
 	}
-	
+
+	public String getTimeoutTestGeneration() {
+		return timeoutTestGeneration;
+	}
+
+	public void setTimeoutTestGeneration(String timeoutTestGeneration) {
+		this.timeoutTestGeneration = timeoutTestGeneration;
+	}
+
+	public void deleteClassesDir() throws IOException {
+		File classesDir = new File(getClassesDir());
+		FileUtils.deleteDirectory(classesDir);
+	}
+
 }

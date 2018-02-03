@@ -1,14 +1,20 @@
 package emp_experiment.model;
 
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 
 import emp_experiment.driver.PITDriver;
-import emp_experiment.driver.SafeRefactorDriver;
+import emp_experiment.utils.ClassPathHack;
+import emp_experiment.utils.CopyFilesException;
+import emp_experiment.utils.MutationException;
 import emp_experiment.utils.Utils;
 
 public class Pitest implements MutationSystem {
@@ -57,21 +63,7 @@ public class Pitest implements MutationSystem {
 	// }
 	// }
 
-	private String getJavaClassName(File file) {
-
-		boolean stop = false;
-		String result = file.getName().replaceAll(".class", "");
-		File testDir = file.getParentFile();
-		while (!stop) {
-			result = testDir.getName() + "." + result;
-			if (result.contains("test")) { // until get diretory testXXX
-				stop = true;
-			} else {
-				testDir = testDir.getParentFile();
-			}
-		}
-		return result;
-	}
+	
 
 	public Session getSession() {
 		return session;
@@ -98,47 +90,82 @@ public class Pitest implements MutationSystem {
 	}
 
 	@Override
-	public File setupStructure(File testDir) throws IOException {
+	public File setupStructure(File testDir) throws CopyFilesException  {
 		// Cria o diretorio do pitest
 		File pitestDir = new File(getSession().getPath() + "/" + testDir.getName() + PITEST_DIR);
 		if (!pitestDir.exists()) {
 			pitestDir.mkdirs();
 		}
-
 		// Cria a estrutura de diretorios que o MuJava precisa
-		sourcesDir = new File(pitestDir.getAbsolutePath() + SRC_DIR + testDir.getName());
-		classesDir = new File(pitestDir.getAbsolutePath() + CLASSES_DIR + testDir.getName());
+		sourcesDir = new File(pitestDir.getAbsolutePath() + SRC_DIR);
+		classesDir = new File(pitestDir.getAbsolutePath() + CLASSES_DIR);
 		mutantsDir = new File(pitestDir.getAbsolutePath() + MUTANTS_DIR);
 		sourcesDir.mkdirs();
 		classesDir.mkdirs();
 		mutantsDir.mkdirs();
 
 		try {
-			// copio o programa gerado para a pasta src do mujava
-			FileUtils.copyDirectory(testDir, sourcesDir);
-			// Copia tb os .class
-			File originalClassFolder = new File(getSession().getClassesDir() + "/" + testDir.getName());
-			FileUtils.copyDirectory(originalClassFolder, classesDir);
+			copyOriginalFilesToPitestDir(testDir);
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new CopyFilesException("Exception to copy from Original dirrectory:" + e.getMessage());
 		}
 
 		return pitestDir;
 	}
+	
+	private void copyOriginalFilesToPitestDir(File testName) throws IOException {
+//		List<File> files = Utils.listFilesAndFilesSubDirectories(testName.getAbsolutePath(), "java");
+//		for (File tmpFile : files) {
+//			String pack = getPackageFrom(tmpFile);
+//			File dest = new File(sourcesDir + "/" + pack);
+//			if(!dest.exists()) {
+//				dest.mkdirs();
+//			}
+//			FileUtils.copyFileToDirectory(tmpFile, dest);
+//		}
+		// Copia tb os .class
+		File originalClassFolder = new File(getSession().getClassesDir());
+		FileUtils.copyDirectory(originalClassFolder, classesDir);
+	}
+	
+	private File getPackageBetween(File classFile, File testName) {
+		String lastFolder = testName.getName();
+		File startPackage = new File(classFile.getAbsolutePath());
+		boolean continueWalk = true;
+		while(continueWalk) {
+			if(startPackage.getName().equals(lastFolder)) {
+				continueWalk = false;
+			} else {
+				startPackage = startPackage.getParentFile();
+			}
+		}
+		return startPackage;
+	}
 
 	@Override
-	public void mutate(File testName) throws Exception {
+	public void mutate(File testName) throws MutationException {
 		// invoca o pitest para gerar os mutantes (dentro da pasta mutants/
 		// criada acima.)
-		String pathToClassDir = getSession().getClassesDir() + "/" + testName.getName();
-		List<File> classFiles = Utils.listFilesAndFilesSubDirectories(pathToClassDir, ".class");
+		// String pathToClassDir = getSession().getClassesDir() + "/" +
+		// testName.getName();
+		// List<File> classFiles = Utils.listFilesAndFilesSubDirectories(pathToClassDir,
+		// ".class");
+		List<File> classFiles = Utils.listFilesAndFilesSubDirectories(classesDir.getAbsolutePath(), "class");
 		int aux = 0;
 		for (File classFile : classFiles) {
-			String className = getJavaClassName(classFile);
-			PITDriver pitest = new PITDriver(mutantsDir.getAbsolutePath(), getSession());
-			int total = pitest.mutate(className, Integer.toString(aux));
-			totalMutants += total;
-			aux++;
+//			ClassPathHack.addFile(this.getClassesDir());
+			String className = Utils.getJavaClassNameFromClassFile(classFile);
+			
+			PITDriver pitest;
+			try {
+				pitest = new PITDriver(classesDir, mutantsDir.getAbsolutePath(), getSession());
+				int total = pitest.mutate(className, Integer.toString(aux));
+				totalMutants += total;
+				aux++;
+			} catch (Exception e) {
+				throw new MutationException(
+						"Exception to generate mutants in " + MUTATION_TESTING_TOOL + ": " + e.getMessage());
+			}
 		}
 	}
 
@@ -154,12 +181,12 @@ public class Pitest implements MutationSystem {
 			mutant.setMutantDir(mutantDirectory);
 			mutant.setMutationTestingTool(MUTATION_TESTING_TOOL);
 			mutant.setNeedCompile(false);
-			
-			List<File> mutantFiles = Utils.listFilesAndFilesSubDirectories(mutantDirectory.getAbsolutePath(),".class");
-			if(mutantFiles != null && mutantFiles.size()>0){
+
+			List<File> mutantFiles = Utils.listFilesAndFilesSubDirectories(mutantDirectory.getAbsolutePath(), ".class");
+			if (mutantFiles != null && mutantFiles.size() > 0) {
 				mutant.setMutatedFile(mutantFiles.get(0));
 			}
-			
+
 			String mutationOperator = mutantDirectory.getName();
 			mutationOperator = mutationOperator.substring(0, mutationOperator.lastIndexOf("_"));
 			mutant.setMutationOperator(mutationOperator);

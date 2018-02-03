@@ -24,9 +24,9 @@ public class SafeRefactor implements EquivalentMutantDetection {
 	}
 
 	@Override
-	public File setupStructure(String folderName) {
+	public File setupStructure(File folderName) {
 		// Cria o diretorio do MuJava
-		File safeRefactorDir = new File(getSession().getPath() + "/" + folderName + SAFEREFACTOR_DIR);
+		File safeRefactorDir = new File(getSession().getPath() + "/" + folderName.getName() + SAFEREFACTOR_DIR);
 		if (!safeRefactorDir.exists()) {
 			safeRefactorDir.mkdirs();
 		}
@@ -39,9 +39,16 @@ public class SafeRefactor implements EquivalentMutantDetection {
 	}
 	
 	@Override
-	public void execute(String testName, List<Mutant> mutants) {
+	public void execute(MutationSystem mutationSystem) {
+		List<Mutant> mutants = mutationSystem.getMutants();
+		
 		String[] args = new String[mutants.size()];
-		args[0] = mutants.get(0).getOriginalDir().getAbsolutePath();
+		if(mutants.get(0).isNeedCompile()) {
+			args[0] = mutationSystem.getSourcesDir().getAbsolutePath();
+		} else {
+			args[0] = mutationSystem.getClassesDir().getAbsolutePath();
+		}
+		
 		for (int i = 1; i < mutants.size(); i++) {
 			Mutant mutant = mutants.get(i);
 			args[i] = mutant.getMutantDir().getAbsolutePath();
@@ -50,7 +57,7 @@ public class SafeRefactor implements EquivalentMutantDetection {
 //		String[] args = { mutant.getOriginalDir().getAbsolutePath(), 
 //				mutant.getMutantDir().getAbsolutePath() };
 
-		new SafeRefactorDriver().execute(args, testName, mutants, this);
+		new SafeRefactorDriver().execute(args, mutationSystem.getClassesDir(), mutants, this);
 	}
 	
 

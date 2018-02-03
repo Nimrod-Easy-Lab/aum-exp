@@ -4,8 +4,8 @@ import java.io.File;
 import java.util.List;
 
 public interface EquivalentMutantDetection {
-	public File setupStructure(String testName);
+	public File setupStructure(File testName);
 	public void execute(String testName, Mutant mutant);
-	public void execute(String testName, List<Mutant> mutants);
+	public void execute(MutationSystem mutationSystem);
 	public List<String> getLogInfo();
 }

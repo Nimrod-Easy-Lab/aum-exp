@@ -11,8 +11,10 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.pitest.classinfo.ClassName;
+import org.pitest.classpath.ClassPath;
 import org.pitest.classpath.ClassPathByteArraySource;
 import org.pitest.functional.predicate.True;
+import org.pitest.mutationtest.MutationConfig;
 import org.pitest.mutationtest.engine.Mutant;
 import org.pitest.mutationtest.engine.Mutater;
 import org.pitest.mutationtest.engine.MutationDetails;
@@ -50,7 +52,7 @@ public class PITDriver {
 	 * @param session
 	 * @throws Exception
 	 */
-	public PITDriver(String output, Session s) throws Exception {
+	public PITDriver(File classesDir, String output, Session s) throws Exception {
 		if (output.isEmpty())
 			throw new Exception("Output directory can't be <empty>");
 
@@ -69,8 +71,13 @@ public class PITDriver {
 				Collections.<String>emptyList(), mutators, new NoInlinedCodeDetection());
 
 		GregorMutationEngine eng = new GregorMutationEngine(engConfig);
-		//MutationConfig config = new MutationConfig(eng, Collections.<String>emptyList());
+//		MutationConfig config = new MutationConfig(eng, Collections.<String>emptyList());		
+		
+		Collection<File> files = ClassPath.getClassPathElementsAsFiles();
+		files.add(classesDir);
+		byteSource = new ClassPathByteArraySource(new ClassPath(files));
 		mutater = eng.createMutator(byteSource);
+		
 	}
 
 	
@@ -94,10 +101,14 @@ public class PITDriver {
 		Collection<MutationDetails> details = mutater.findMutations(new ClassName(className));
 		Iterator<MutationDetails> iterator = details.iterator();
 		ArrayList<Mutant> mutants = new ArrayList<Mutant>();
-		while (iterator.hasNext()) {
-			Mutant mutant = mutater.getMutation(iterator.next().getId());
-			mutants.add(mutant);
-			
+		while (iterator.hasNext()) {			
+			Mutant mutant;
+			try {
+				mutant = mutater.getMutation(iterator.next().getId());
+				mutants.add(mutant);
+			} catch (UnsupportedOperationException e) {
+				e.printStackTrace();
+			}			
 		}
 		return mutants;
 	}

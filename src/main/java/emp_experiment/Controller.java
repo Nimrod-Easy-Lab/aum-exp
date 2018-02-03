@@ -11,6 +11,9 @@ import emp_experiment.model.EquivalentMutantDetection;
 import emp_experiment.model.Mutant;
 import emp_experiment.model.MutationSystem;
 import emp_experiment.model.Session;
+import emp_experiment.utils.CompilerException;
+import emp_experiment.utils.CopyFilesException;
+import emp_experiment.utils.MutationException;
 import emp_experiment.utils.Utils;
 
 public class Controller {
@@ -72,34 +75,41 @@ public class Controller {
 	/**
 	 * Aqui continua a execução 1 - Compilar 2 - Executar o teste de mutação 3 -
 	 * Analisar equivalencia
+	 * @throws IOException 
 	 * 
 	 * @throws Exception
 	 */
-	public void startAnalysis(File testDir, List<Mutant> allMutants) throws Exception {
-		System.out.println("Start Analysis of: " + testDir.getName());
-		if (session.compileProgram(testDir)) {
+	public void startAnalysis(File testDir, List<Mutant> allMutants) throws IOException {
+		System.out.println("Start Analysis of: " + testDir.getName());		
+		
+		try {
+			session.compileProgram(testDir);
 			session.createDirectory(testDir);
-			equivalentDetection.setupStructure(testDir.getName());
+			equivalentDetection.setupStructure(testDir);
 			for (MutationSystem mutationSystem : getMutationSystems()) {
 				mutationSystem.setupStructure(testDir);
 				mutationSystem.mutate(testDir);
-				List<Mutant> mutants = mutationSystem.getMutants();
-				// for (Mutant mutant : mutants) {
-				// equivalentDetection.execute(testDir.getName(), mutant);
-				//
-				// }
-				if (mutants != null && mutants.size() > 0) {
-					equivalentDetection.execute(testDir.getName(), mutants);
+				if (mutationSystem.getMutants() != null && mutationSystem.getMutants().size() > 0) {
+					System.out.println("Total Mutants: " + mutationSystem.getMutants().size());
+					equivalentDetection.execute(mutationSystem);
 				}
-
-				allMutants.addAll(mutants);
+				allMutants.addAll(mutationSystem.getMutants());
 			}
-		} else {
-			System.out.println("    " + testDir.getName() + " didn't compile.");
+			
+		} catch(CompilerException e) {
+			System.out.println(e.getMessage());
+			logCompileError(testDir);			
+		} catch(CopyFilesException e) {
+			System.out.println(e.getMessage());
+			logCompileError(testDir);	
+		} catch (MutationException e) {
+			System.out.println(e.getMessage());
 			logCompileError(testDir);
+		} finally {
+			session.deleteClassesDir();
+			logGeneralInfo();
+			tagTestAsAnalyzed(testDir);
 		}
-		logGeneralInfo();
-		tagTestAsAnalyzed(testDir);
 	}
 
 	private void logGeneralInfo() throws IOException {

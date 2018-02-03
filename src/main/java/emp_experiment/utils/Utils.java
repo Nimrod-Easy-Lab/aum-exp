@@ -6,7 +6,10 @@ import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -42,7 +45,7 @@ public class Utils {
 		File f = new File(path + "/" + LOGGER_NAME + "_" + fileName + ".log");
 		Files.write(f.toPath(), lines, UTF_8, APPEND, CREATE);
 	}
-	
+
 	public static void logWrite(String path, String fileName, List<String> lines) throws IOException {
 		File f = new File(path + "/" + LOGGER_NAME + "_" + fileName + ".log");
 		Files.write(f.toPath(), lines, UTF_8, WRITE, CREATE);
@@ -139,10 +142,9 @@ public class Utils {
 			// Change all line
 			if (line.contains("package Package_")) {
 				line = "package " + newPackageName + ";";
-			} else if(line.contains("import Package_")){
+			} else if (line.contains("import Package_")) {
 				String[] lineParts = line.trim().split(" ");
-				line = "import " + newPackageName.substring(0, newPackageName.lastIndexOf(".")) + 
-						"." + lineParts[1];
+				line = "import " + newPackageName.substring(0, newPackageName.lastIndexOf(".")) + "." + lineParts[1];
 			}
 			input += line + '\n';
 		}
@@ -168,18 +170,57 @@ public class Utils {
 		return result.substring(0, result.length() - 1);
 	}
 
-	
 	public static String getPackageName(File javaFile) throws IOException {
 		BufferedReader file = new BufferedReader(new FileReader(javaFile));
-		String line;		
-		while ((line = file.readLine()) != null) {
-			if (line.contains("package test")) {
-				return line.substring(line.indexOf("test"), line.length());
+		try {
+			String line;
+			String response = "";
+			while ((line = file.readLine()) != null) {
+				if (line.contains("package ") && line.contains(";")) {
+					response = line.replace("package ", "");
+					response = response.replace(";", "");
+					return response;
+				}
 			}
-			
+			return response;
+		} finally {
+			file.close();
 		}
-		file.close();
+	}
+	
+	public static String getJavaClassNameFromClassFile(File file) {
+		String className = "";
+		try {
+			DataInputStream dis = new DataInputStream(new FileInputStream(file));
+			dis.readLong(); // skip header and class version
+			int cpcnt = (dis.readShort() & 0xffff) - 1;
+			int[] classes = new int[cpcnt];
+			String[] strings = new String[cpcnt];
+			for (int i = 0; i < cpcnt; i++) {
+				int t = dis.read();
+				if (t == 7)
+					classes[i] = dis.readShort() & 0xffff;
+				else if (t == 1)
+					strings[i] = dis.readUTF();
+				else if (t == 5 || t == 6) {
+					dis.readLong();
+					i++;
+				} else if (t == 8)
+					dis.readShort();
+				else
+					dis.readInt();
+			}
+			dis.readShort(); // skip access flags
+			className = strings[classes[(dis.readShort() & 0xffff) - 1] - 1].replace('/', '.');
+			return className;
+
+		} catch (FileNotFoundException e) {
+			System.out.println(e.getMessage() + "-" + className);
+		} catch (Exception e) {
+			System.out.println(e.getMessage() + "-" + className);
+		}
 		return "";
 	}
+	
 
 }

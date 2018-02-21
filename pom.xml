@@ -23,8 +23,13 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.12</version>
-      <scope>test</scope>
+      <!-- <scope>test</scope> -->
     </dependency>
+    <dependency>
+      <groupId>ant</groupId>
+      <artifactId>ant-junit</artifactId>
+      <version>1.6.5</version>
+    </dependency>      
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
@@ -54,6 +59,11 @@
     <dependency>
 	<groupId>mujava</groupId>
 	<artifactId>mujava</artifactId>
+	<version>1.0</version>
+    </dependency>
+    <dependency>
+	<groupId>plume</groupId>
+	<artifactId>plume</artifactId>
 	<version>1.0</version>
     </dependency>
     <dependency>

@@ -1,11 +1,11 @@
 # aum-exp
 Avoiding Useless Mutants - Experiment [Strategy to help identifying new RULES] 
-
+ 
 Getting started
 ----------------
 #### Setting up 
 1. Clone aum-exp:
-    - `git clone https://github.com/Nimrod-Easy-Lab/aum-exp.git`
+    - `git clone https://github.com/easy-software-ufal/aum-exp.git`
 
 2. Initialize aum-exp (download the project repositories and external libraries, which are not included in the git repository for size purposes and to avoid redundancies):
     - `cd aum-exp`
@@ -15,7 +15,9 @@ Getting started
 
 #### Using aum-exp
 4. Executing
-    - `java -jar target/...jar <path to data>`
+    - Create a project folder <example> with 2 directories: src/ and classes/
+    - Put the SUT source files on src/ directory
+    - `java -cp <example>/classes  -jar target/...jar <path to data>`
 
 
 #### Developing aum-exp

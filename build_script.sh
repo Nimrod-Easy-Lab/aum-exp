@@ -8,6 +8,8 @@ echo "Building aux-exp..."
 #É importante verficiar antes se a pasta do repositorio local ja não esta preenchida...para nao precisar fazer isso novamente.
 mvn deploy:deploy-file -Dfile=lib/mujava.jar -DgroupId=mujava -DartifactId=mujava -Dversion=1.0 -Dpackaging=jar -Durl=file:./maven-repository/ -DrepositoryId=maven-repository -DupdateReleaseInfo=true
 
+mvn deploy:deploy-file -Dfile=lib/plume.jar -DgroupId=mujava -DartifactId=plume -Dversion=1.0 -Dpackaging=jar -Durl=file:./maven-repository/ -DrepositoryId=maven-repository -DupdateReleaseInfo=true
+
 mvn deploy:deploy-file -Dfile=lib/openjava.jar -DgroupId=openjava -DartifactId=openjava -Dversion=1.0 -Dpackaging=jar -Durl=file:./maven-repository/ -DrepositoryId=maven-repository -DupdateReleaseInfo=true
 
 mvn deploy:deploy-file -Dfile=lib/tools.jar -DgroupId=com.sun -DartifactId=tools -Dversion=1.0 -Dpackaging=jar -Durl=file:./maven-repository/ -DrepositoryId=maven-repository -DupdateReleaseInfo=true

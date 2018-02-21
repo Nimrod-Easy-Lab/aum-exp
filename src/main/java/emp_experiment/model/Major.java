@@ -52,7 +52,7 @@ public class Major implements MutationSystem {
 		mutantsDir.mkdirs();
 
 		try {
-			copyOriginalFilesToMujavaDir(testName);
+			copyOriginalFilesToMajorDir(testName);
 		} catch (IOException e) {
 			throw new CopyFilesException("Exception to copy from Original dirrectory:" + e.getMessage());
 		}
@@ -60,7 +60,7 @@ public class Major implements MutationSystem {
 		return majordir;
 	}
 
-	private void copyOriginalFilesToMujavaDir(File testName) throws IOException {
+	private void copyOriginalFilesToMajorDir(File testName) throws IOException {
 		// copio o programa gerado para a pasta src do mujava
 		// O Mujava exige que a mesma estrutura de pacotes eja usada.
 		List<File> files = Utils.listFilesAndFilesSubDirectories(testName.getAbsolutePath(), "java");
@@ -73,7 +73,7 @@ public class Major implements MutationSystem {
 			FileUtils.copyFileToDirectory(tmpFile, dest);
 		}
 		// Copia tb os .class
-		File originalClassFolder = new File(getSession().getClassesDir() + "/" + testName.getName());
+		File originalClassFolder = new File(getSession().getClassesDir());
 		FileUtils.copyDirectory(originalClassFolder, classesDir);
 	}
 

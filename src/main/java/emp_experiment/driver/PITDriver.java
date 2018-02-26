@@ -14,7 +14,6 @@ import org.pitest.classinfo.ClassName;
 import org.pitest.classpath.ClassPath;
 import org.pitest.classpath.ClassPathByteArraySource;
 import org.pitest.functional.predicate.True;
-import org.pitest.mutationtest.MutationConfig;
 import org.pitest.mutationtest.engine.Mutant;
 import org.pitest.mutationtest.engine.Mutater;
 import org.pitest.mutationtest.engine.MutationDetails;

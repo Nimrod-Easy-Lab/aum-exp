@@ -27,7 +27,7 @@ mvn clean
 
 mvn package
 
-echo "JAR file successfully generated."
-echo "Execute the following command: java -jar target/aum-exp-1.0-SNAPSHOT-shaded.jar <local-dir>"
+#echo "JAR file successfully generated."
+#echo "Execute the following command: java -jar target/aum-exp-1.0-SNAPSHOT-shaded.jar <local-dir>"
 
 

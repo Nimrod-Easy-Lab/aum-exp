@@ -86,6 +86,19 @@
       <artifactId>nimrod</artifactId>
       <version>1.0</version>
     </dependency>
+    		<!-- https://mvnrepository.com/artifact/org.evosuite/evosuite-master -->
+		<dependency>
+			<groupId>org.evosuite</groupId>
+			<artifactId>evosuite-master</artifactId>
+			<version>1.0.5</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.evosuite</groupId>
+			<artifactId>evosuite-runtime</artifactId>
+			<version>1.0.5</version>
+		</dependency>
+
   </dependencies>
   <build>
     <plugins>
@@ -109,7 +122,8 @@
             </configuration>
           </execution>
         </executions>
-        </plugin>
+      </plugin>
+      
 
        <!--
       <plugin>
@@ -127,6 +141,5 @@
       </plugin>
       -->
     </plugins>
-  </build>
-
+  </build> 
 </project>

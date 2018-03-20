@@ -1,7 +1,6 @@
 package emp_experiment.model;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 import emp_experiment.utils.CopyFilesException;

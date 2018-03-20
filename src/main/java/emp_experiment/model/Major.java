@@ -6,7 +6,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.io.FileExistsException;
 import org.apache.commons.io.FileUtils;
 
 import emp_experiment.driver.MajorDriver;

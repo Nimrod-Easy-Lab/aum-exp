@@ -22,8 +22,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
-import emp_experiment.model.Session;
-
 public class Utils {
 	public static final String LOGGER_NAME = "emp";
 	public static String session = "";

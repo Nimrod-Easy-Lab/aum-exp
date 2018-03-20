@@ -89,11 +89,12 @@ public class Controller {
 			for (MutationSystem mutationSystem : getMutationSystems()) {
 				mutationSystem.setupStructure(testDir);
 				mutationSystem.mutate(testDir);
-				if (mutationSystem.getMutants() != null && mutationSystem.getMutants().size() > 0) {
+				List<Mutant> mutants = mutationSystem.getMutants();
+				if (mutants != null && mutants.size() > 0) {
 					System.out.println("Total Mutants: " + mutationSystem.getMutants().size());
 					equivalentDetection.execute(mutationSystem);
 				}
-				allMutants.addAll(mutationSystem.getMutants());
+				allMutants.addAll(mutants);
 			}
 			
 		} catch(CompilerException e) {

@@ -6,8 +6,6 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 
-import javax.naming.NamingException;
-
 public class ClassPathHack {
 
 	private static final Class[] parameters = new Class[] { URL.class };

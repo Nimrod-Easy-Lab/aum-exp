@@ -27,7 +27,7 @@
 
 		<!-- option to set compiler removed: executable="${compiler}"-->
 		
-		<javac encoding="iso-8859-1" fork="yes" failonerror="true" memorymaximumsize="512m" includes="**/*.java"
+		<javac encoding="UTF-8" fork="yes" failonerror="true" memorymaximumsize="512m" includes="**/*.java"
 			debug="on" srcdir="${src}/" destdir="${dest}/">
 			<classpath>
 				<pathelement location="${binClasspath}/" />

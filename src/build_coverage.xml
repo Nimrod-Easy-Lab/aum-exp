@@ -1,0 +1,181 @@
+<project name="RefactoringProject" default="run_target" basedir="."> 
+	
+	
+	  <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+	  <target name="init" >	     
+	  	 <mkdir dir="${coverage.dir}" />  	 
+	  	 
+	  	
+	    <path id="run.classpath" >
+	      <pathelement location="${targetBin}" />
+	    </path>
+	  
+	  </target>
+
+	  <!-- root directory for the example source code: --> 
+	  <property name="src.dir" value="${targetSrc}" />
+	
+	
+
+	  <!-- javac class output directory: -->
+	  <property name="out.dir" value="${targetBin}" />
+
+
+	  <!-- output directory used for EMMA coverage reports: -->
+	  <property name="coverage.dir" value="${tests.folder}/coverage" />
+	
+	  <!-- directory that contains emma.jar and emma_ant.jar: -->
+	  
+
+	  <!-- path element used by EMMA taskdef below: -->
+	  <path id="emma.lib" >
+	  	<pathelement path="${java.class.path}"/>
+	  	<pathelement path="${extra.jars}"/>
+	  </path>
+
+	  <!-- this loads <emma> and <emmajava> custom tasks: -->
+	  <taskdef resource="emma_ant.properties" classpathref="emma.lib" />
+	
+
+	
+	<path id="classpath_target">
+		<fileset dir="${lib}/" includes="*.jar" />		
+	</path>
+	
+	  <target name="emma" description="turns on EMMA's instrumentation/reporting" >
+	    <property name="emma.enabled" value="true" />
+	    <!-- EMMA instr class output directory (it is important to create
+	         this property only when EMMA is enabled:
+	    -->
+	    <property name="out.instr.dir" value="${tests.folder}/outinstr" />
+	  	  	 <mkdir dir="${out.instr.dir}" />
+	  	
+	    
+	    <!-- this property, if overriden via -Demma.filter=<list of filter specs>
+	         on ANT's command line, will set the coverage filter; by default,
+	         all classes found in 'run.classpath' pathref will be instrumented:
+	    -->
+	    <property name="emma.filter" value="" />
+	  </target>
+
+	<target name="clean" depends="init,emma">	
+		
+		<delete includeemptydirs="false">
+			<fileset dir="${out.instr.dir}/" includes="**/*" />			
+			<fileset dir="${coverage.dir}/" includes="**/*" />						
+		</delete>
+	</target>
+	
+
+	
+
+	
+	<target name="run_target" depends="clean">
+	<echo>Running JUnit to test the "target"</echo>
+		
+
+	    <emma enabled="${emma.enabled}" >
+	      <instr instrpathref="run.classpath"
+	             destdir="${out.instr.dir}"	       
+	             metadatafile="${coverage.dir}/metadata.emma"
+	             merge="true"
+	      >
+	        <!-- note that coverage filters can be set through nested <filter>
+	             elements as well: many of EMMA setting are 'mergeable' in the
+	             sense that they can be specified multiple times and the result
+	             is a union of all such values. Here we are not merging several
+	             filters together but merely demonstrating that it is possible:
+	        --> 
+	        <filter value="${emma.filter}" />
+	      </instr>
+	    </emma>
+		
+		
+			<junit printsummary="yes" showoutput="no" haltonfailure="yes" fork="true" maxmemory="512m" timeout="240000">	
+				
+				<classpath>
+							        <!-- instrumented classes must be first in the classpath: -->
+							        <pathelement location="${out.instr.dir}" />
+							        <path refid="run.classpath" /> 
+							        <!-- the forked JVM must have jact.jar in the classpath: -->
+							        <path refid="emma.lib" />
+							      </classpath>
+							  <classpath>
+											<fileset dir="${lib}">
+												<include name="**/*.jar" />
+											</fileset>											
+							  				<pathelement path="${java.class.path}"/>
+											<pathelement location="${tests.folder}/" />
+										</classpath>
+				<classpath path="bin"/>		
+											  					
+										<classpath refid="classpath_target" />
+							      <!-- to be certain, tell EMMA runtime where to dump the runtime
+							           coverage data (otherwise the filename is relative to the JVM's
+							           current directory and it is easy to get confused about what
+							           that is):
+							      -->
+							      <jvmarg value="-Demma.coverage.out.file=${coverage.dir}/coverage.emma" />
+							      <jvmarg value="-Demma.coverage.out.merge=false" />											  
+				<formatter type="xml" />
+				<batchtest haltonfailure="no">
+					<fileset dir="${tests.folder}/">
+						<!--To check relevant tests, comment next line, and uncomment the following one.-->
+						<include name="*Test.class" />							
+						<!--<include name="${test.name}" />-->
+					</fileset>
+				</batchtest>
+			</junit>
+		
+		<!-- if enabled, generate coverage report(s): -->
+				    <emma enabled="${emma.enabled}" >
+				      <report sourcepath="${src.dir}"
+				              sort="+block,+name,+method,+class"
+				              metrics="method:70,block:80,line:80,class:100"
+				      >
+				        <!-- collect all EMMA data dumps (metadata and runtime)
+				             [this can be done via nested <fileset> fileset elements
+				             or <file> elements pointing to a single file]:
+				        -->
+				        <fileset dir="${coverage.dir}" >
+				          <include name="*.emma" />
+				        </fileset>
+
+				        <!-- for every type of report desired, configure a nested
+				             element; various report parameters
+				             can be inherited from the parent <report>
+				             and individually overridden for each report type:
+				        -->
+				        
+				        <xml outfile="${coverage.dir}/coverage.xml"
+				             depth="method"
+				        	 columns="name,class,method,block,line"
+				        />
+				        
+				      </report>
+				    </emma>				
+	</target>
+</project>
+
+
+	
+	
+	        
+				
+	
+	
+
+
+
+	 
+	
+	  
+	
+	
+    	
+  
+	
+	
+	
+   

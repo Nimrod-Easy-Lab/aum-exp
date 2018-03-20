@@ -32,8 +32,8 @@
 			<formatter type="xml" />
 			<batchtest todir="${report.dir}/">
 				<fileset dir="${tests.dir}/">
-					<include name="*Test*.class" />
-					<exclude name="RandoopTest.class" />
+				  <include name="**/*Test*.class" />
+				  <exclude name="**/RandoopTest.class" />
 				</fileset>
 			</batchtest>
 		</junit>

@@ -221,11 +221,11 @@ public class SafeRefactorDriver {
 			NimrodImpl sr = new NimrodImpl(sourceProject, targetProjects, parameters, TestGeneratorType.EVO_SUITE);
 			// sr.checkTransformation();
 			if (parameters.isCompileProjects()) {
-				sr.compileTargets();
+				sr.compileTargets(); 
 			}
 			sr.checkTransformations(targetProjects);
-			sr.printEquivalents();
-			sr.printDuplicated();
+//			sr.logEquivalents(path); reativar estas linhas
+//			sr.logDuplicated(path);
 
 			Report report = sr.getReport();
 

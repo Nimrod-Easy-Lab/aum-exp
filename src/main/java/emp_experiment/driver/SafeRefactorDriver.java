@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,8 +21,11 @@ import saferefactor.core.NimrodImpl;
 import saferefactor.core.Parameters;
 import saferefactor.core.Report;
 import saferefactor.core.SafeRefactor;
+import saferefactor.core.SafeRefactorException;
 import saferefactor.core.SafeRefactorImp;
+import saferefactor.core.generation.TestGeneratorType;
 import saferefactor.core.util.Project;
+import saferefactor.ui.Main;
 
 public class SafeRefactorDriver {
 
@@ -31,7 +35,7 @@ public class SafeRefactorDriver {
 	private static String source = "";
 	// private static String target = "";
 	private static List<String> targets;
-//	private static String timeout = "3";
+	// private static String timeout = "3";
 	private static boolean quiet = false;
 
 	private static final String SAFEREFACTOR_MAIN = " saferefactor.ui.Main";
@@ -46,6 +50,122 @@ public class SafeRefactorDriver {
 
 	public void execute(String[] args, File classesDir, List<Mutant> mutants,
 			emp_experiment.model.SafeRefactor safeRefactor) {
+
+		safeRefactorModel = safeRefactor;
+
+		ArrayList<String> argsToNimrod = new ArrayList<String>();
+		argsToNimrod.add("-original");
+		argsToNimrod.add(args[0]);
+		argsToNimrod.add("-mutants");
+		String param = "";
+		for (int i = 1; i < args.length; i++) {
+			if (i == 1) {
+				param = args[i];
+			} else {
+				param = param + ":" + args[i];
+			}
+		}
+		argsToNimrod.add(param);
+		argsToNimrod.add("-testGenerator");
+		argsToNimrod.add("evo_suite"); // evo_suite | randoop_ant
+		argsToNimrod.add("-timeout");
+		argsToNimrod.add(safeRefactorModel.getSession().getTimeoutTestGeneration());
+		argsToNimrod.add("-output");
+		argsToNimrod.add(classesDir.getParentFile().getAbsolutePath());
+
+		// Verifica se precisa compilar o projeto
+		if (mutants.get(0).isNeedCompile()) {
+			// Caso eu queira executar apenas com .class
+			argsToNimrod.add("-compile");
+		}
+
+		String path = System.getProperty("user.dir");
+		// Imprimir o comando para o Nimrod
+		String comando = "java -cp " + path + "/target/nimrod-0.0.1-SNAPSHOT.jar:" + args[0] + ":" + path
+				+ "/lib/* saferefactor.ui.Main ";
+		for (String temp : argsToNimrod) {
+			comando = comando + temp + " ";
+		}
+		// System.out.println(comando);
+		ArrayList<String> lines = new ArrayList<String>();
+		lines.add(comando);
+		try {
+			Utils.logWrite(classesDir.getParentFile().getAbsolutePath(), "NimrodCommand.sh", lines);
+		} catch (IOException e) {
+			System.out.println("Error to generate Nimrod command to:" + classesDir.getParentFile().getAbsolutePath());
+			e.printStackTrace();
+		}
+
+		// try {
+		//
+		// NimrodImpl sr = (NimrodImpl) Main.startAnalysis(argsToNimrod.toArray(new
+		// String[argsToNimrod.size()]));
+		//
+		// List<String> equivalents = sr.getEquivalents();
+		// List<String> duplicateds = sr.getDuplicateds();
+		//
+		// System.out.println("Finished analysis of " + classesDir.getParent());
+		// System.out.println("Tool: " + mutants.get(0).getMutationTestingTool());
+		// System.out.println("Equivalents: " + equivalents.size());
+		// System.out.println("Duplicateds: " + duplicateds.size());
+		// System.out.println("-------------------------------------------------");
+		//
+		// // Log duplicateds
+		// List<String> duplicated_lines = new ArrayList<String>();
+		// for (String dup : duplicateds) {
+		// String line = args[0] + ":";
+		// line += dup;
+		// duplicated_lines.add(line);
+		// }
+		//
+		// if (duplicated_lines.size() > 0) {
+		// Utils.logAppend(safeRefactorModel.getSession().getPath(), "duplicated",
+		// duplicated_lines);
+		// }
+		//
+		// // Log equivalents
+		// List<String> equivalent_lines = new ArrayList<String>();
+		// for (String pathToEquivalent : equivalents) {
+		// for (Mutant mutant : mutants) {
+		// if (mutant.getMutantDir().getAbsolutePath().equals(pathToEquivalent)) {
+		// mutant.setEquivalent(true);
+		// }
+		// }
+		// String line = args[0] + ":";
+		// line += pathToEquivalent;
+		// equivalent_lines.add(line);
+		// }
+		// if (equivalent_lines.size() > 0) {
+		// Utils.logAppend(safeRefactorModel.getSession().getPath(), "equivalents_path",
+		// equivalent_lines);
+		// }
+		//
+		// reAnalysisDuplicated(sr, args[0]);
+		//
+		// } catch (Throwable e) {
+		// // Se gerar algum erro, tb deve ser logado como falha.
+		// safeRefactorModel.addOneToTotalFailedAnalysis();
+		// List<String> line = new ArrayList<String>();
+		// String textToLog = "";
+		// textToLog = "Test " + classesDir.getParent() + " failed analysis.";
+		// textToLog += "Result: EXCEPTION";
+		// textToLog += "Reason: " + e.getMessage();
+		// line.add(textToLog);
+		// try {
+		// Utils.logAppend(safeRefactorModel.getSession().getPath(), "failed_analysis",
+		// line);
+		// } catch (IOException e1) {
+		// e1.printStackTrace();
+		// }
+		//
+		// System.err.println(e.getMessage());
+		// e.printStackTrace();
+		// }
+
+	}
+
+	public void execute(String[] args, File classesDir, List<Mutant> mutants,
+			emp_experiment.model.SafeRefactor safeRefactor, int x) {
 
 		safeRefactorModel = safeRefactor;
 
@@ -98,13 +218,14 @@ public class SafeRefactorDriver {
 
 			// SafeRefactor sr = new SafeRefactorImp(sourceProject ,
 			// targetProject, parameters );
-			NimrodImpl sr = new NimrodImpl(sourceProject, targetProjects, parameters);
+			NimrodImpl sr = new NimrodImpl(sourceProject, targetProjects, parameters, TestGeneratorType.EVO_SUITE);
 			// sr.checkTransformation();
 			if (parameters.isCompileProjects()) {
 				sr.compileTargets();
 			}
 			sr.checkTransformations(targetProjects);
-			sr.printMutantsListInfo();
+			sr.printEquivalents();
+			sr.printDuplicated();
 
 			Report report = sr.getReport();
 
@@ -145,107 +266,7 @@ public class SafeRefactorDriver {
 				Utils.logAppend(safeRefactorModel.getSession().getPath(), "equivalents_path", equivalent_lines);
 			}
 
-			// Old log model
-			// for (Mutant mutant : mutants) {
-			// String textToLog = "";
-			// textToLog = "Test: " + testName;
-			// textToLog += ".File: " + mutant.getMutatedFile().getName();
-			// textToLog += ".Mutation: " + mutant.getMutantDir().getName() +
-			// "(" + mutant.getMutationTestingTool()
-			// + ")";
-			// // textToLog += ".Number of tested methods: " +
-			// // report.getTotalMethodsToTest();
-			// textToLog += ".Number of tests(SR): " + report.getNumberTests();
-			// // Caso não tenha nenhum teste ou apenas um. A analise foi
-			// // falha.
-			// if (report.getTotalMethodsToTest() <= 1 ||
-			// report.getNumberTests() < 10) {
-			// safeRefactorModel.addOneToTotalFailedAnalysis();
-			// List<String> line = new ArrayList<String>();
-			// textToLog += ". Result:FAILED";
-			// textToLog += ". Reason:Few tests generated (" +
-			// report.getNumberTests() + ")";
-			// line.add(textToLog);
-			// Utils.logAppend(safeRefactorModel.getSession().getPath(),
-			// "failed_analysis", line);
-			// } else {
-			// // Verifica se é equivalente o mutante para poder logar no
-			// // local correto.
-			// if (mutant.isEquivalent()) {
-			// safeRefactorModel.addOneToEquivalents();
-			// List<String> line = new ArrayList<String>();
-			// textToLog += ".Result:EQUIVALENT";
-			// line.add(textToLog);
-			// safeRefactorModel.copyToEquivalentDir(mutant.getMutantDir(),
-			// testName);
-			// Utils.logAppend(safeRefactorModel.getSession().getPath(),
-			// mutant.getMutationTestingTool() + "_" +
-			// mutant.getMutationOperator(), line);
-			// Utils.logAppend(safeRefactorModel.getSession().getPath(),
-			// "equivalent", line);
-			// } else {
-			// safeRefactorModel.addOneToNonEquivalents();
-			// List<String> line = new ArrayList<String>();
-			// textToLog += ".Result:NON-EQUIVALENT";
-			// line.add(textToLog);
-			// safeRefactorModel.copyToNonEquivalentDir(mutant.getMutantDir(),
-			// testName);
-			// Utils.logAppend(safeRefactorModel.getSession().getPath(),
-			// mutant.getMutationTestingTool() + "_" +
-			// mutant.getMutationOperator(), line);
-			// Utils.logAppend(safeRefactorModel.getSession().getPath(),
-			// "non-equivalent", line);
-			// }
-			// }
-			// }
-
-			System.out.println("Checking false positives in Duplicated Mutants...");
-			System.out.println("Total duplicateds before re-analysis: " + duplicateds.size());
-			int totalDuplicateds = 0;
-			List<String> duplicated_lines_reanalysis = new ArrayList<String>();
-			for (String duplicated : duplicateds) {
-				String[] programs = duplicated.split(":");
-
-				File binSourceDup = new File(programs[0], binPath);
-				File srcSourceDup = new File(programs[0], srcPath);
-				File libSourceDup = new File(programs[0], libPath);
-
-				File binTargetDup = new File(programs[1], binPath);
-				File srcTargetDup = new File(programs[1], srcPath);
-				File libTargetDup = new File(programs[1], libPath);
-
-				Project sourceProjectDup = new Project();
-				sourceProjectDup.setProjectFolder(new File(programs[0]));
-				sourceProjectDup.setSrcFolder(srcSourceDup);
-				sourceProjectDup.setBuildFolder(binSourceDup);
-				sourceProjectDup.setLibFolder(libSourceDup);
-
-				Project targetProjectDup = new Project();
-				targetProjectDup.setProjectFolder(new File(programs[1]));
-				targetProjectDup.setBuildFolder(binTargetDup);
-				targetProjectDup.setSrcFolder(srcTargetDup);
-				targetProjectDup.setLibFolder(libTargetDup);
-
-				Parameters parametersDup = new Parameters();
-				// parameters.setKind_of_analysis(Parameters.SAFIRA_ANALYSIS);
-				parametersDup.setTimeLimit(Integer.parseInt(safeRefactorModel.getSession().getTimeoutTestGeneration()));
-				parametersDup.setCompileProjects(false);
-
-				SafeRefactor srDuplicateds = new SafeRefactorImp(sourceProjectDup, targetProjectDup, parametersDup);
-				srDuplicateds.checkTransformation();
-				report = srDuplicateds.getReport();
-				if (report.isRefactoring()) {
-					System.out.println(programs[0] + " == " + programs[1]);
-					totalDuplicateds++;
-					String line = sourceProject.getSrcFolder().getAbsolutePath() + ":";
-					line += sourceProjectDup.getProjectFolder().getAbsolutePath() + ":"
-							+ targetProjectDup.getProjectFolder().getAbsolutePath();
-					duplicated_lines_reanalysis.add(line);
-				}
-			}
-			Utils.logAppend(safeRefactorModel.getSession().getPath(), "duplicated_reanalysis",
-					duplicated_lines_reanalysis);
-			System.out.println("Total duplicateds after re-analysis: " + totalDuplicateds);
+			reAnalysisDuplicated(sr, sourceProject.getSrcFolder().getAbsolutePath());
 
 		} catch (Throwable e) {
 			// Se gerar algum erro, tb deve ser logado como falha.
@@ -266,6 +287,58 @@ public class SafeRefactorDriver {
 			e.printStackTrace();
 		}
 
+	}
+
+	private void reAnalysisDuplicated(NimrodImpl sr, String sourceFolder)
+			throws Exception, SafeRefactorException, IOException {
+		List<String> duplicateds = sr.getDuplicateds();
+		System.out.println("Checking false positives in Duplicated Mutants...");
+		System.out.println("Total duplicateds before re-analysis: " + duplicateds.size());
+		int totalDuplicateds = 0;
+		List<String> duplicated_lines_reanalysis = new ArrayList<String>();
+		for (String duplicated : duplicateds) {
+			String[] programs = duplicated.split(":");
+
+			File binSourceDup = new File(programs[0], binPath);
+			File srcSourceDup = new File(programs[0], srcPath);
+			File libSourceDup = new File(programs[0], libPath);
+
+			File binTargetDup = new File(programs[1], binPath);
+			File srcTargetDup = new File(programs[1], srcPath);
+			File libTargetDup = new File(programs[1], libPath);
+
+			Project sourceProjectDup = new Project();
+			sourceProjectDup.setProjectFolder(new File(programs[0]));
+			sourceProjectDup.setSrcFolder(srcSourceDup);
+			sourceProjectDup.setBuildFolder(binSourceDup);
+			sourceProjectDup.setLibFolder(libSourceDup);
+
+			Project targetProjectDup = new Project();
+			targetProjectDup.setProjectFolder(new File(programs[1]));
+			targetProjectDup.setBuildFolder(binTargetDup);
+			targetProjectDup.setSrcFolder(srcTargetDup);
+			targetProjectDup.setLibFolder(libTargetDup);
+
+			Parameters parametersDup = new Parameters();
+			// parameters.setKind_of_analysis(Parameters.SAFIRA_ANALYSIS);
+			parametersDup.setTimeLimit(Integer.parseInt(safeRefactorModel.getSession().getTimeoutTestGeneration()));
+			parametersDup.setCompileProjects(false);
+
+			SafeRefactor srDuplicateds = new SafeRefactorImp(sourceProjectDup, targetProjectDup, parametersDup,
+					TestGeneratorType.EVO_SUITE);
+			srDuplicateds.checkTransformation();
+			Report report = srDuplicateds.getReport();
+			if (report.isRefactoring()) {
+				System.out.println(programs[0] + " == " + programs[1]);
+				totalDuplicateds++;
+				String line = sourceFolder + ":";
+				line += sourceProjectDup.getProjectFolder().getAbsolutePath() + ":"
+						+ targetProjectDup.getProjectFolder().getAbsolutePath();
+				duplicated_lines_reanalysis.add(line);
+			}
+		}
+		Utils.logAppend(safeRefactorModel.getSession().getPath(), "duplicated_reanalysis", duplicated_lines_reanalysis);
+		System.out.println("Total duplicateds after re-analysis: " + totalDuplicateds);
 	}
 
 	private static void parseArguments(String[] args) {
@@ -296,13 +369,13 @@ public class SafeRefactorDriver {
 					System.err.println("-lib requires a path");
 				if (vflag)
 					System.out.println("lib path= " + libPath);
-//			} else if (arg.equals("-timeout")) {
-//				if (i < args.length)
-//					timeout = args[i++];
-//				else
-//					System.err.println("-timeout requires a time");
-//				if (vflag)
-//					System.out.println("timeout= " + libPath);
+				// } else if (arg.equals("-timeout")) {
+				// if (i < args.length)
+				// timeout = args[i++];
+				// else
+				// System.err.println("-timeout requires a time");
+				// if (vflag)
+				// System.out.println("timeout= " + libPath);
 			}
 		}
 
